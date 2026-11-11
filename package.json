@@ -1,0 +1,8 @@
+{
+  "name": "spotter",
+  "private": true,
+  "type": "module",
+  "description": "Spotter — the coach's own Claude writes client training plans over MCP; Spotter stores, edits and serves them. No AI inside.",
+  "scripts": { "dev": "node dev.mjs" },
+  "engines": { "node": ">=20" }
+}
