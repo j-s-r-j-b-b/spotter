@@ -16,7 +16,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id');
   if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
 
-  const key = query(req).key;
+  // Key arrives as ?key= (rewrite destination) or, depending on the host, still in the original /mcp/<key> path.
+  const key = req.query?.key || query(req).key || (new URL(req.url, 'http://x').pathname.match(/\/mcp\/([\w-]+)/) || [])[1];
   const coach = key ? await coachByMcpKey(key) : null;
 
   if (req.method === 'GET' && /text\/html/.test(req.headers.accept || '')) {
