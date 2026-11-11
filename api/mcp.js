@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Spotter connector</title><body style="font:16px/1.5 system-ui;max-width:560px;margin:60px auto;padding:0 20px;color:#12161b">
       <h2>${coach ? 'This is a Spotter connector link' : 'Unknown connector link'}</h2>
-      <p>${coach ? 'Paste this address into Claude → Settings → Connectors → Add custom connector. It is not meant to be opened in a browser.' : 'This link is not valid (it may have been reset). Log in to Spotter and copy your link from “Connect Claude”.'}</p>
+      <p>${coach ? 'Paste this address into Claude → Customize → Connectors → Add custom connector. It is not meant to be opened in a browser.' : 'This link is not valid (it may have been reset). Log in to Spotter and copy your link from “Connect Claude”.'}</p>
       <p><a href="/app/connect">Open Spotter</a></p></body>`);
   }
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST, OPTIONS'); return send(res, 405, fail(null, -32000, 'Method not allowed. Spotter speaks MCP over HTTP POST.')); }

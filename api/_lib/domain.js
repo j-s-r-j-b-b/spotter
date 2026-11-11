@@ -158,7 +158,8 @@ function normWeek(w, n) {
   return { n, focus: clip(w?.focus ?? '', 160), workouts: src.map(normWorkout).filter(Boolean).slice(0, LIMITS.workouts) };
 }
 
-const sig = (e) => [e.name, e.sets, e.reps, e.load, e.rest ?? '', e.notes].map((x) => String(x ?? '').toLowerCase().trim()).join('|');
+// Compare exercises loosely (case, spacing, "rest 0" vs blank) so re-sent but unchanged rows aren't flagged.
+const sig = (e) => [e.name, e.sets, e.reps, e.load, e.rest || '', e.notes].map((x) => String(x ?? '').toLowerCase().replace(/\s+/g, '').replace(/[.,;:]+$/, '')).join('|');
 export const fmtEx = (e) => `${e.sets}×${e.reps}${e.load ? ' @ ' + e.load : ''}`;
 const key = (s) => String(s || '').toLowerCase().trim();
 
@@ -199,8 +200,12 @@ function reconcileWeek(nw, ow, by) {
 }
 
 function stampWeek(nw, ow, by, note, changes) {
-  if (!ow || changes.length) { nw.updatedBy = by; nw.updatedAt = now(); nw.note = clip(note, 400); }
-  else { nw.updatedBy = ow.updatedBy; nw.updatedAt = ow.updatedAt; nw.note = ow.note || ''; }
+  // Keep the last explanation (usually Claude's "why") until someone writes a new one.
+  const n = clip(note, 400);
+  nw.note = n || ow?.note || '';
+  nw.noteBy = n ? by : ow?.noteBy || ow?.updatedBy || by;
+  if (!ow || changes.length) { nw.updatedBy = by; nw.updatedAt = now(); }
+  else { nw.updatedBy = ow.updatedBy; nw.updatedAt = ow.updatedAt; }
 }
 
 export async function savePlan(coach, c, input, by, note = '') {
