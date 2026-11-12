@@ -37,6 +37,11 @@ code, .mono { font-family: var(--fm); font-size: .92em; }
 .btn.ghost { background: transparent; border-color: transparent; } .btn.ghost:hover { background: rgba(18, 22, 27, .05); }
 .btn.danger { color: var(--bad); }
 .btn.sm { height: 30px; padding: 0 10px; font-size: 12.5px; }
+.btn.claude { background: var(--claude); border-color: var(--claude); color: #fff; } .btn.claude:hover { background: #AD5333; border-color: #AD5333; }
+.btn.claude-o { background: var(--claude-bg); border-color: var(--claude-line); color: #8A3F22; } .btn.claude-o:hover { background: #F8E2D7; border-color: #E9B9A4; }
+.ask-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--claude-bg); border: 1px solid var(--claude-line); border-radius: var(--r); padding: 9px 12px; margin: -4px 0 18px; }
+.ask-row .ask-lbl { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #6E3520; margin-right: 4px; } .ask-row .ask-lbl .ic { color: var(--claude); }
+.ask-row .tiny { margin-left: auto; color: #9A6A55; }
 .btn.lg { height: 46px; padding: 0 20px; font-size: 15px; border-radius: 10px; }
 .btn.full { width: 100%; }
 .icon-btn { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); }

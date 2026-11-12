@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { html, Icon, Logo, Link, navigate, toast, copy, timeAgo, Avatar, Actor, Flag, Modal } from './ui.js';
+import { html, Icon, Logo, Link, navigate, toast, copy, timeAgo, Avatar, Actor, Flag, Modal, AskClaude, PromptBox, CLAUDE_CONNECTORS } from './ui.js';
 import { api } from './api.js';
 import { ClientPage } from './client-detail.js';
 
@@ -17,7 +17,7 @@ export function usePoll(fn, ms, deps = []) {
 export const PROMPTS = (first = 'Rahul') => [
   { t: 'Add a client and write their plan', p: 'Add a new client to Spotter: Priya Nair, 32, wants to lose fat and feel stronger, beginner, trains 3 days a week at home with dumbbells up to 15 kg. Her right knee hurts on deep squats. Then write her a 4-week plan.' },
   { t: 'Weekly check across all clients', p: 'How are my Spotter clients doing this week? Tell me who I should worry about and why.' },
-  { t: 'Review and adjust one client', p: `Review ${first}'s progress in Spotter and adjust next week based on what he actually did. Then send him a short check-in message.` },
+  { t: 'Review and adjust one client', p: `Review ${first}'s progress in Spotter and adjust next week based on what they actually did. Then send them a short check-in message.` },
   { t: 'Write the next block', p: 'Kabir\'s plan ends this week. Look at how he did and write his next 4-week block in Spotter.' },
 ];
 
@@ -102,7 +102,7 @@ function ClientsPage({ me }) {
     </header>
     ${d.store === 'temporary' && html`<div class="warn-bar"><${Icon} n="alert" s=${14} /> Storage isn't connected on this deployment, so data may reset. Add Upstash Redis in Vercel.</div>`}
     ${cs.length ? html`
-      <div class="ask-claude"><${Icon} n="spark" s=${16} /><span>Try in Claude: <q>${prompt}</q></span><button class="btn sm" onClick=${() => copy(prompt, 'Prompt copied — paste it into Claude')}><${Icon} n="copy" s=${13} /> Copy</button></div>
+      <div class="ask-claude"><${Icon} n="spark" s=${16} /><span>Try in Claude: <q>${prompt}</q></span><${AskClaude} p=${prompt} /><button class="btn sm" title="Copy" onClick=${() => copy(prompt, 'Prompt copied — paste it into Claude')}><${Icon} n="copy" s=${13} /></button></div>
       <div class="cols">
         <div class="card list-card">
           <div class="c-row head"><span></span><span>Client</span><span>Plan</span><span>This week</span><span>Last workout</span><span>Needs a look</span></div>
@@ -124,8 +124,8 @@ function Onboard({ me, onAdd }) {
     <h2>Connect your Claude, then ask it to add your first client</h2>
     <ol class="steps-ol">
       <li>Copy your private connector link: <div class="url-box"><code>${me.mcpUrl}</code><button class="btn sm" onClick=${() => copy(me.mcpUrl, 'Connector link copied')}><${Icon} n="copy" s=${13} /> Copy</button></div></li>
-      <li>In Claude, go to <b>Customize → Connectors → Add custom connector</b>. Name it <b>Spotter</b> and paste the link. <${Link} to="/app/connect">Detailed steps<//></li>
-      <li>In a new chat, paste this:<div class="prompt-box"><p>${p}</p><button class="btn sm" onClick=${() => copy(p, 'Prompt copied')}><${Icon} n="copy" s=${13} /> Copy</button></div></li>
+      <li>In Claude, go to <b>Customize → Connectors → Add custom connector</b>. Name it <b>Spotter</b>, paste the link and choose <b>No sign-in</b>. <a class="btn sm claude-o" href=${CLAUDE_CONNECTORS} target="_blank" rel="noopener"><${Icon} n="plug" s=${13} /> Open Claude's connector settings <${Icon} n="ext" s=${12} /></a> <${Link} to="/app/connect">Detailed steps<//></li>
+      <li>Ask Claude to add your first client:<${PromptBox} p=${p} /></li>
     </ol>
     <p class="muted small">Your new client will appear here within a few seconds. Prefer to start by hand? <button class="linkish" onClick=${onAdd}>Add a client yourself</button>.</p>
   </div>`;
@@ -178,8 +178,8 @@ function ConnectPage({ me, setMe }) {
     <div class="card">
       <h3>Add it to Claude (one minute)</h3>
       <ol class="steps-ol">
-        <li>Open <b>Claude</b> (claude.ai or the desktop app) and go to <b>Customize → Connectors</b> (<a href="https://claude.ai/customize/connectors" target="_blank" rel="noopener">claude.ai/customize/connectors</a>). In some versions it's under <b>Settings → Connectors</b>.</li>
-        <li>Click <b>Add custom connector</b>. Name: <b>Spotter</b>. Remote MCP server URL: paste the link above. Click <b>Add</b>. No sign-in is needed.</li>
+        <li>Open <b>Claude</b> and go to <b>Customize → Connectors → Add custom connector</b> (in some versions it's under <b>Settings → Connectors</b>).<div><a class="btn sm claude" href=${CLAUDE_CONNECTORS} target="_blank" rel="noopener" style="margin-top:8px"><${Icon} n="plug" s=${13} /> Open Claude's connector settings <${Icon} n="ext" s=${12} /></a></div></li>
+        <li>Name: <b>Spotter</b>. MCP server URL: paste the link above. Under Authentication, keep <b>No sign-in</b> (Claude detects it). Click <b>Add</b>.</li>
         <li>Start a new chat. In the <b>+ / tools</b> menu, check that <b>Spotter</b> is switched on.</li>
         <li>Ask for something (examples below). The first time Claude uses a Spotter action it asks your permission. Choose <b>Always allow</b> so it can work smoothly.</li>
       </ol>
@@ -188,7 +188,8 @@ function ConnectPage({ me, setMe }) {
 
     <div class="card">
       <h3>Things to ask</h3>
-      <div class="prompts">${PROMPTS().map((x) => html`<div class="prompt-box"><span class="tiny muted">${x.t}</span><p>${x.p}</p><button class="btn sm" onClick=${() => copy(x.p, 'Prompt copied')}><${Icon} n="copy" s=${13} /> Copy</button></div>`)}</div>
+      <p class="tiny muted">“Ask Claude” opens your Claude in a new tab with the request already typed in. You check it and press send. Spotter itself never talks to an AI.</p>
+      <div class="prompts">${PROMPTS().map((x) => html`<${PromptBox} t=${x.t} p=${x.p} />`)}</div>
     </div>
 
     <div class="card">

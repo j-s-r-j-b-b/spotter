@@ -51,6 +51,17 @@ export async function copy(text, label = 'Copied') {
   toast(label, 'ok');
 }
 
+// "Ask Claude" opens the coach's OWN Claude in a new tab with the request already typed in (claude.ai/new?q=…).
+// Spotter never calls an AI model itself; the coach reviews the request and presses send in Claude.
+export const claudeLink = (p) => 'https://claude.ai/new?q=' + encodeURIComponent(p);
+export const CLAUDE_CONNECTORS = 'https://claude.ai/new?modal=add-custom-connector#customize/connectors/yours';
+export const AskClaude = ({ p, label = 'Ask Claude', solid = true }) => html`<a class=${'btn sm ' + (solid ? 'claude' : 'claude-o')} href=${claudeLink(p)} target="_blank" rel="noopener"
+  title="Opens your Claude in a new tab with this request typed in"
+  onClick=${() => { navigator.clipboard?.writeText(p).catch(() => {}); toast('Opening your Claude with this request — press send there', 'claude'); }}>
+  <${Icon} n="spark" s=${13} w=${2.4} /> ${label} <${Icon} n="ext" s=${12} /></a>`;
+export const PromptBox = ({ p, t }) => html`<div class="prompt-box">${t ? html`<span class="tiny muted">${t}</span>` : null}<p>${p}</p>
+  <div class="row"><${AskClaude} p=${p} /><button class="btn sm" title="Copy" onClick=${() => copy(p, 'Prompt copied — paste it into Claude')}><${Icon} n="copy" s=${13} /> Copy</button></div></div>`;
+
 export function timeAgo(iso) {
   if (!iso) return '';
   const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);

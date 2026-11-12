@@ -1,11 +1,29 @@
 import { useState, useRef } from 'preact/hooks';
-import { html, Icon, Link, navigate, toast, copy, timeAgo, fmtDay, fmtDate, fmtEx, Avatar, Actor, Flag } from './ui.js';
+import { html, Icon, Link, navigate, toast, copy, timeAgo, fmtDay, fmtDate, fmtEx, Avatar, Actor, Flag, AskClaude, PromptBox } from './ui.js';
 import { api } from './api.js';
 import { usePoll, Dots } from './coach.js';
 
 const who = (by) => ({ claude: 'Claude', coach: 'you', client: 'client' }[by] || by);
 const num = (s) => { const m = String(s ?? '').replace(',', '.').match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 const newEx = () => ({ id: 'ex_n' + Math.random().toString(36).slice(2, 9), name: '', sets: 3, reps: '10', load: '', rest: 60, notes: '' });
+
+// Suggested requests for the coach's Claude, picked by plain rules from the client's flags (no AI in Spotter).
+function claudeAsks(c, s, sessions) {
+  const n = c.name;
+  const flag = (code) => s.flags.find((x) => x.code === code);
+  const pain = flag('pain');
+  const note = pain ? pain.text.replace(/^Pain reported:?\s*/, '') : '';
+  const painBit = pain ? (note ? `, working around the pain they reported ("${note}")` : ', working around the pain they reported') : '';
+  const out = [];
+  if (!c.plan) out.push(['Write a plan', `Write a 4-week plan in Spotter for ${n}${c.goal ? ` (goal: ${c.goal})` : ''}. Use their profile for days per week, equipment and injuries.`]);
+  else if (s.finished || flag('ending')) out.push(['Write the next block', `${n}'s plan in Spotter ${s.finished ? 'has finished' : 'ends this week'}. Review how the whole block went and write their next 4-week block, building on what they actually lifted${painBit}.`]);
+  else if (!s.started || !sessions.length) out.push(['Double-check the plan', `Look over ${n}'s plan in Spotter and check it fits their profile: days per week, equipment and injuries. Fix anything that doesn't and tell me what you changed.`]);
+  else out.push(['Review & adjust next week', `Review ${n}'s progress in Spotter and adjust next week based on what they actually did${painBit}. Explain what you changed.`]);
+  if (flag('inactive')) out.push(['Send a nudge', `${n} hasn't trained for a few days. Check their progress in Spotter and send them a short, friendly nudge to get back on track.`]);
+  else if (!sessions.length) out.push(['Send a welcome', `Send ${n} a short welcome message in Spotter explaining how their first week works.`]);
+  else out.push(['Send a check-in', `Read ${n}'s recent workouts in Spotter and send them a short, encouraging check-in message.`]);
+  return out;
+}
 
 export function ClientPage({ id }) {
   const [d, setD] = useState(null);
@@ -72,6 +90,12 @@ export function ClientPage({ id }) {
       </div>
     </header>
 
+    <div class="ask-row">
+      <span class="ask-lbl"><${Icon} n="spark" s=${14} w=${2.4} /> Ask your Claude</span>
+      ${claudeAsks(c, s, sessions).map(([t, p], i) => html`<${AskClaude} p=${p} label=${t} solid=${i === 0} />`)}
+      <span class="tiny">Opens Claude with the request typed in</span>
+    </div>
+
     <div class="tabs" role="tablist">${tabs.map(([k, l]) => html`<button role="tab" class=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l}${k === 'messages' && unseen ? html`<i class="badge">${unseen} unseen</i>` : null}</button>`)}</div>
 
     ${tab === 'plan' && html`<${PlanTab} c=${c} s=${s} draft=${draft} edit=${edit} wk=${wk || s.week || 1} setWk=${setWk} dirty=${dirty} stale=${stale} discard=${discard} run=${run} startBlank=${() => { setDraft({ title: 'Training plan', startDate: new Date().toISOString().slice(0, 10), weeks: [{ n: 1, focus: '', workouts: [{ id: 'wo_n1', name: 'Day A', exercises: [newEx()] }] }] }); setDirty(true); setWk(1); }} />`}
@@ -91,7 +115,7 @@ function PlanTab({ c, s, draft, edit, wk, setWk, dirty, stale, discard, run, sta
       <div class="empty-ic"><${Icon} n="dumbbell" s=${22} /></div>
       <h3>No plan yet</h3>
       <p class="muted">Ask your Claude to write one. It'll appear here in seconds, ready for you to review.</p>
-      <div class="prompt-box"><p>${p}</p><button class="btn sm" onClick=${() => copy(p, 'Prompt copied — paste it into Claude')}><${Icon} n="copy" s=${13} /> Copy</button></div>
+      <${PromptBox} p=${p} />
       <button class="linkish" onClick=${startBlank}>or start a blank plan yourself</button>
     </div>`;
   }
